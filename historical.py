@@ -44,7 +44,7 @@ if __name__ == "__main__":
 			# empty logs table to make room for new data
 			page_count = logservatory.get_db_stat('PRAGMA page_count')
 			database_size = page_size * page_count
-			if database_size >= 0.9 * logservatory.memory
+			if database_size >= 0.9 * logservatory.memory:
 				cur = logservatory.connection.cursor()
 				cur.execute("DELETE FROM logs")
 				logservatory.connection.commit()
