@@ -23,7 +23,7 @@ connection = ''
 
 
 def parse_args(mode='live'):
-	global index, start, end, format, queries_file, output, sample, buffer_size, memory, period, queries
+	global index, start, end, format, queries_file, output, sample, buffer_size, memory, period, queries, encoding
 
 	if mode=='static':
 		opts_array = ["index=", "start=", "end=", "format=", "queries=", "output=", "buffer=", "memory=", "period=", "sample=", "encoding="]
