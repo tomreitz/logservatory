@@ -26,7 +26,7 @@ if __name__ == "__main__":
 	n_requests = 0
 	n_bytes = 0
 	for log_idx_row in logs_idx_rows:
-		with open(log_idx_row[0], 'r', , encoding=logservatory.encoding) as file:
+		with open(log_idx_row[0], 'r', encoding=logservatory.encoding) as file:
 			for line in file: logservatory.buffer.append(line.strip())
 		buffer_size += int(log_idx_row[1])
 		n_logs += 1
