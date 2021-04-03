@@ -34,7 +34,7 @@ if __name__ == "__main__":
 		n_requests += int(log_idx_row[2])
 		n_bytes = int(log_idx_row[1])
 
-		if buffer_size>= 10000 # hard-code buffer_size of 10k lines
+		if buffer_size>= 10000: # hard-code buffer_size of 10k lines
 			logservatory.ingest_logs()
 			logservatory.buffer = []
 			buffer_size = 0
