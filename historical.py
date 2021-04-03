@@ -9,6 +9,7 @@ if __name__ == "__main__":
 	logservatory.validate_args('static')
 	logservatory.start_database()
 	start_timestamp = int(time.time())
+	page_size = logservatory.get_db_stat('PRAGMA page_size')
 
 	# start processing logs from index:
 	logservatory.load_index()
@@ -33,21 +34,25 @@ if __name__ == "__main__":
 		n_requests += int(log_idx_row[2])
 		n_bytes = int(log_idx_row[1])
 
-		if buffer_size>= 0.9 * logservatory.memory:
+		if buffer_size>= 10000 # hard-code buffer_size of 10k lines
 			logservatory.ingest_logs()
 			logservatory.buffer = []
+			buffer_size = 0
 			logservatory.print_db_stats()
 			logservatory.run_queries(mode='static')
 
 			# empty logs table to make room for new data
-			cur = logservatory.connection.cursor()
-			cur.execute("DELETE FROM logs")
-			logservatory.connection.commit()
-			buffer_size = 0
+			page_count = logservatory.get_db_stat('PRAGMA page_count')
+			database_size = page_size * page_count
+			if database_size >= 0.9 * logservatory.memory
+				cur = logservatory.connection.cursor()
+				cur.execute("DELETE FROM logs")
+				logservatory.connection.commit()
 
 	# process final queries after logs are done ingesting
 	logservatory.ingest_logs()
 	logservatory.buffer = []
+	buffer_size = 0
 	logservatory.print_db_stats()
 	logservatory.run_queries(mode='static')
 
