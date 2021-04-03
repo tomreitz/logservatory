@@ -118,6 +118,9 @@ def validate_args(mode='live'):
 		print('Argument "period" (the processing period) must be a positive integer.')
 		exit()
 
+	start = datetime.timestamp(parse(start))
+	end = datetime.timestamp(parse(end))
+
 	try:
 		sample = float(sample)
 	except:
