@@ -14,6 +14,7 @@ sample = 1.0 # what fraction of logs to sample and query over
 buffer_size = 100 # how large to let the log buffer get before ingesting it into SQLite
 memory = 100000000 # maximum amount of memory (in bytes) the system can use
 period = 60 # how many seconds to wait between successive query runs
+encoding = 'utf-8'
 
 queries = []
 buffer = []
@@ -25,9 +26,9 @@ def parse_args(mode='live'):
 	global index, start, end, format, queries_file, output, sample, buffer_size, memory, period, queries
 
 	if mode=='static':
-		opts_array = ["index=", "start=", "end=", "format=", "queries=", "output=", "buffer=", "memory=", "period=", "sample="]
+		opts_array = ["index=", "start=", "end=", "format=", "queries=", "output=", "buffer=", "memory=", "period=", "sample=", "encoding="]
 	else:
-		opts_array = ["format=", "queries=", "output=", "buffer=", "memory=", "period=", "sample="]
+		opts_array = ["format=", "queries=", "output=", "buffer=", "memory=", "period=", "sample=", "encoding="]
 
 	# parse cli args:
 	argv = sys.argv[1:]
@@ -57,6 +58,8 @@ def parse_args(mode='live'):
 			period = arg
 		elif opt in ['--sample']:
 			sample = arg
+		elif opt in ['--encoding']:
+			encoding = arg
 
 def validate_args(mode='live'):
 	global index, start, end, format, queries_file, output, sample, buffer_size, memory, period, queries
