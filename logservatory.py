@@ -204,7 +204,7 @@ def fetch_log_files(start, end, sample):
 	global connection
 	cur = connection.cursor()
 	if start!='' and end!='':
-		count_query = "SELECT COUNT(*), MIN(min_ts), MAX(max_ts) FROM logs_idx WHERE min_ts>="+str(start)+" AND max_ts<="+str(end)
+		count_query = "SELECT COUNT(*), MIN(min_ts), MAX(max_ts) FROM logs_idx WHERE min_ts>="+str(start)+" OR max_ts<="+str(end)
 	else:
 		count_query = "SELECT COUNT(*), MIN(min_ts), MAX(max_ts) FROM logs_idx"
 	cur.execute(count_query)
