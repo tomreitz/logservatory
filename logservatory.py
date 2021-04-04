@@ -204,9 +204,9 @@ def fetch_log_files(start, end, sample):
 	global connection
 	cur = connection.cursor()
 	if start!='' and end!='':
-		count_query = "SELECT COUNT(*), MIN(min_ts), MAX(max_ts) FROM logs_idx WHERE min_ts>="+str(start)+" OR max_ts<="+str(end)
+		count_query = "SELECT COUNT(*) FROM logs_idx WHERE min_ts>="+str(start)+" OR max_ts<="+str(end)
 	else:
-		count_query = "SELECT COUNT(*), MIN(min_ts), MAX(max_ts) FROM logs_idx"
+		count_query = "SELECT COUNT(*) FROM logs_idx"
 	cur.execute(count_query)
 	rows = cur.fetchall()
 	num_rows = rows[0][0]
@@ -215,8 +215,10 @@ def fetch_log_files(start, end, sample):
 		query = "SELECT * FROM ( " + count_query.replace("COUNT(*)","*") + " ORDER BY RANDOM() LIMIT " + str(math.ceil(sample*num_rows)) + ") ORDER BY min_ts ASC, max_ts ASC, file ASC"
 	else:
 		query = count_query.replace("COUNT(*)","*") + " ORDER BY min_ts ASC, max_ts ASC, file ASC"
+	print(query)
 	cur.execute(query)
 	rows = cur.fetchall()
+	print(len(rows))
 	return rows
 
 
