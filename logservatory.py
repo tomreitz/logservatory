@@ -121,8 +121,19 @@ def validate_args(mode='live'):
 		print('Argument "period" (the processing period) must be a positive integer.')
 		exit()
 
-	start = datetime.timestamp(parse(start))
-	end = datetime.timestamp(parse(end))
+	if start!='':
+		try:
+			start = datetime.timestamp(parse(start))
+		except:
+			print('Argument "start" (processing start date) could not be parsed.')
+			exit()
+
+	if end!='':
+		try:
+			end = datetime.timestamp(parse(end))
+		except:
+			print('Argument "end" (processing end date) could not be parsed.')
+			exit()
 
 	try:
 		sample = float(sample)
@@ -192,12 +203,18 @@ def load_index():
 def fetch_log_files(start, end, sample):
 	global connection
 	cur = connection.cursor()
-	cur.execute("SELECT COUNT(*), MIN(min_ts), MAX(max_ts) FROM logs_idx") # WHERE min_ts>="+str(start)+" AND max_ts<="+str(end)+"")
+	if start!='' and end!='':
+		count_query = "SELECT COUNT(*), MIN(min_ts), MAX(max_ts) FROM logs_idx WHERE min_ts>="+str(start)+" AND max_ts<="+str(end)
+	else:
+		count_query = "SELECT COUNT(*), MIN(min_ts), MAX(max_ts) FROM logs_idx"
+	cur.execute(count_query)
 	rows = cur.fetchall()
 	num_rows = rows[0][0]
 	cur = connection.cursor()
-	if sample<1.0: query = "SELECT * FROM logs_idx WHERE min_ts<="+str(end)+" OR max_ts>="+str(start)+" ORDER BY RANDOM() LIMIT "+str(math.ceil(sample*num_rows))
-	else: query = "SELECT * FROM logs_idx WHERE min_ts<="+str(end)+" OR max_ts>="+str(start)+" ORDER BY min_ts ASC, max_ts ASC, file ASC"
+	if sample<1.0:
+		query = "SELECT * FROM ( " + count_query.replace("COUNT(*)","*") + " ORDER BY RANDOM() LIMIT " + str(math.ceil(sample*num_rows)) + ") ORDER BY min_ts ASC, max_ts ASC, file ASC"
+	else:
+		query = count_query.replace("COUNT(*)","*") + " ORDER BY min_ts ASC, max_ts ASC, file ASC"
 	cur.execute(query)
 	rows = cur.fetchall()
 	return rows

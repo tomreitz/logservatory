@@ -34,17 +34,17 @@ if __name__ == "__main__":
 		n_requests += int(log_idx_row[2])
 		n_bytes = int(log_idx_row[1])
 
-		if buffer_size>= 10000: # hard-code buffer_size of 10k lines
+		if buffer_size>= 100000: # hard-code buffer_size of 100k lines
 			logservatory.ingest_logs()
 			logservatory.buffer = []
 			buffer_size = 0
 			logservatory.print_db_stats()
-			logservatory.run_queries(mode='static')
 
 			# empty logs table to make room for new data
 			page_count = logservatory.get_db_stat('PRAGMA page_count')
 			database_size = page_size * page_count
 			if database_size >= 0.9 * logservatory.memory:
+				logservatory.run_queries(mode='static')
 				cur = logservatory.connection.cursor()
 				cur.execute("DELETE FROM logs")
 				logservatory.connection.commit()
