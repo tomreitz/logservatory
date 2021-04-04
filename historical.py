@@ -47,6 +47,7 @@ if __name__ == "__main__":
 				logservatory.run_queries(mode='static')
 				cur = logservatory.connection.cursor()
 				cur.execute("DELETE FROM logs")
+				cur.execute("vacuum")
 				logservatory.connection.commit()
 
 	# process final queries after logs are done ingesting
