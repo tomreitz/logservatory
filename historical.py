@@ -14,12 +14,12 @@ if __name__ == "__main__":
 	# start processing logs from index:
 	logservatory.load_index()
 
-	if logservatory.start!='': global_start = logservatory.start
-	else: global_start = logservatory.get_db_stat('SELECT MIN(min_ts) FROM logs_idx')
-	if logservatory.end!='': global_end = logservatory.end
-	else: global_end = logservatory.get_db_stat('SELECT MAX(max_ts) FROM logs_idx')
+	#if logservatory.start!='': global_start = logservatory.start
+	#else: global_start = logservatory.get_db_stat('SELECT MIN(min_ts) FROM logs_idx')
+	#if logservatory.end!='': global_end = logservatory.end
+	#else: global_end = logservatory.get_db_stat('SELECT MAX(max_ts) FROM logs_idx')
 
-	logs_idx_rows = logservatory.fetch_log_files(global_start, global_end, logservatory.sample)
+	logs_idx_rows = logservatory.fetch_log_files()
 	# log rows contain columns: 0=file, 1=size_bytes, 2=n_lines, 3=min_ts, 4=max_ts
 
 	buffer_size = 0
@@ -34,7 +34,7 @@ if __name__ == "__main__":
 		n_requests += int(log_idx_row[2])
 		n_bytes = int(log_idx_row[1])
 
-		if buffer_size>= 100000: # hard-code buffer_size of 100k lines
+		if len(logservatory.buffer)>= 100000: # hard-code buffer_size of 100k lines
 			logservatory.ingest_logs()
 			logservatory.buffer = []
 			buffer_size = 0
@@ -47,8 +47,8 @@ if __name__ == "__main__":
 				logservatory.run_queries(mode='static')
 				cur = logservatory.connection.cursor()
 				cur.execute("DELETE FROM logs")
-				cur.execute("vacuum")
 				logservatory.connection.commit()
+				logservatory.get_db_stat("vacuum")
 
 	# process final queries after logs are done ingesting
 	logservatory.ingest_logs()

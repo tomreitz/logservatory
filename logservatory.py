@@ -162,26 +162,25 @@ def start_database():
 timestamp int,  elb_name string, request_ip string, request_port int, backend_ip string, backend_port int,
 request_processing_time double, backend_processing_time double, client_response_time double,
 request_status_code string, backend_status_code string, received_bytes bigint, sent_bytes bigint,
-request_verb string, request_url string, request_protocol string, user_agent string, ssl_cipher string, ssl_protocol string)
-""")
+request_verb string, request_url string, request_protocol string, user_agent string, ssl_cipher string,
+ssl_protocol string) """)
 
 	if format=='ncsa-common':
 		fields = ["request_ip", "auth_user", "timestamp", "request_verb", "request_url", "request_protocol",
 			"request_status_code", "sent_bytes",
 		]
 		c.execute("""CREATE TABLE IF NOT EXISTS logs (
-request_ip string, auth_user string, timestamp int, request_verb string, request_url string, request_protocol string,
-request_status_code string, sent_bytes bigint)
-""")
+request_ip string, auth_user string, timestamp int, request_verb string, request_url string,
+request_protocol string, request_status_code string, sent_bytes bigint) """)
 
 	if format=='ncsa-combined':
 		fields = ["request_ip", "auth_user", "timestamp", "request_verb", "request_url", "request_protocol",
 			"request_status_code", "sent_bytes", "referrer", "user_agent"
 		]
 		c.execute("""CREATE TABLE IF NOT EXISTS logs (
-request_ip string, auth_user string, timestamp int, request_verb string, request_url string, request_protocol string,
-request_status_code string, sent_bytes bigint, referrer string, user_agent string)
-""")
+request_ip string, auth_user string, timestamp int, request_verb string, request_url string,
+request_protocol string, request_status_code string, sent_bytes bigint, referrer string,
+user_agent string) """)
 		c.execute("""CREATE INDEX timestamp_idx ON logs (timestamp)""")
 
 	connection.commit()
@@ -190,7 +189,8 @@ request_status_code string, sent_bytes bigint, referrer string, user_agent strin
 def load_index():
 	global connection, index
 	cur = connection.cursor()
-	cur.execute("CREATE TABLE logs_idx (file, size_bytes, n_lines, min_ts, max_ts);")
+	cur.execute("""CREATE TABLE logs_idx (file string, size_bytes bigint,
+			n_lines bigint, min_ts bigint, max_ts bigint)""")
 
 	with open(index,'r') as fin:
 		dr = csv.DictReader(fin)
@@ -200,25 +200,31 @@ def load_index():
 	connection.commit()
 
 
-def fetch_log_files(start, end, sample):
-	global connection
+def fetch_log_files():
+	global connection, start, end, sample
 	cur = connection.cursor()
+	count_query = "SELECT COUNT(*) FROM logs_idx"
 	if start!='' and end!='':
-		count_query = "SELECT COUNT(*) FROM logs_idx WHERE min_ts>="+str(start)+" OR max_ts<="+str(end)
-	else:
-		count_query = "SELECT COUNT(*) FROM logs_idx"
+		count_query += """ WHERE
+			( min_ts>=""" + str(int(start)) + """ AND max_ts<=""" + str(int(end)) + """ )
+			OR ( min_ts<=""" + str(int(start)) + """ AND max_ts>=""" + str(int(start)) + """ )
+			OR ( min_ts<=""" + str(int(end)) + """ AND max_ts>=""" + str(int(end)) + """ ) """
+	elif start!='':
+		count_query += " WHERE max_ts>="+str(int(start))
+	elif end!='':
+		count_query += " WHERE min_ts<="+str(int(end))
 	cur.execute(count_query)
 	rows = cur.fetchall()
 	num_rows = rows[0][0]
 	cur = connection.cursor()
 	if sample<1.0:
-		query = "SELECT * FROM ( " + count_query.replace("COUNT(*)","*") + " ORDER BY RANDOM() LIMIT " + str(math.ceil(sample*num_rows)) + ") ORDER BY min_ts ASC, max_ts ASC, file ASC"
+		query = """SELECT * FROM ( """ + count_query.replace("COUNT(*)","*") + """
+			ORDER BY RANDOM() LIMIT """ + str(math.ceil(sample*num_rows)) + """
+			) ORDER BY min_ts ASC, max_ts ASC, file ASC"""
 	else:
 		query = count_query.replace("COUNT(*)","*") + " ORDER BY min_ts ASC, max_ts ASC, file ASC"
-	print(query)
 	cur.execute(query)
 	rows = cur.fetchall()
-	print(len(rows))
 	return rows
 
 
@@ -230,7 +236,7 @@ def ingest_logs():
 		# Note: for Python 2.7 compatibility, use ur"" to prefix the regex and u"" to prefix the test string and substitution.
 		if format=='aws-elb-classic':
 			# REFERENCE: https://docs.aws.amazon.com/athena/latest/ug/application-load-balancer-logs.html#create-alb-table
-			regex = r"([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" (\"[^\"]*\") ([A-Z0-9-]+) ([A-Za-z0-9.-]*)$"
+			regex = r'([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) "([^ ]*) ([^ ]*) (- |[^ ]*)" ("[^\"]*") ([A-Z0-9-]+) ([A-Za-z0-9.-]*)$'
 			#regex = r"([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" ($|\"[^ ]*\")(.*)"
 		elif format=='ncsa-common':
 			regex = '([(\d\.)]+) - (.*?) \[(.*?)\] "(.*?) (.*?) (.*?)" (\d+) (\d+)'
