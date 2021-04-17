@@ -207,7 +207,7 @@ Logservatory's performance depends on many factors including your machine's disk
 
 1. 2011 custom desktop, 16GB memory, 2TB HDD ("old, slow machine")
 
-2. 2020 MacBook Pro laptop, 16GB memory, 500GB SSD, ??? CPU ("modern, fast machine")
+2. 2020 MacBook Pro laptop, 16GB memory, 500GB SSD ("modern, fast machine")
 
 with three different workloads:
 
