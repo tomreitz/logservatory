@@ -45,6 +45,7 @@ To process live logs:
 ```bash
 tail -f path/to/access_log | python live.py \
     --format ncsa-common \
+    --encoding ISO-8859-1 \
     --queries path/to/queries.sql \
     --output path/to/output/ \
     --buffer 100\
@@ -71,6 +72,7 @@ python historical.py \
     --start 20200201 \
     --end 20200301 \
     --format aws-elb-classic \
+    --encoding ISO-8859-1 \
     --index path/to/log-index.csv \
     --queries path/to/queries.sql \
     --output path/to/output/
@@ -203,7 +205,7 @@ GROUP BY ip, ts, n_reqs;
 
 Logservatory's performance depends on many factors including your machine's disk, memory, and CPU specs. But here are some benchmarks on two different machines:
 
-1. 2011 custom desktop, 16GB memory, 2TB HDD, ??? CPU ("old, slow machine")
+1. 2011 custom desktop, 16GB memory, 2TB HDD ("old, slow machine")
 
 2. 2020 MacBook Pro laptop, 16GB memory, 500GB SSD, ??? CPU ("modern, fast machine")
 
@@ -213,7 +215,7 @@ with three different workloads:
 
 * **Workload 2:** `historical.py` processing 20 GB of log files ()
 
-* **Workload 3:** `historical.py` processing 1.4 TB of log files (564,704 log files, 3.284 BN requests)
+* **Workload 3:** `historical.py` running 19 queries over 1.4 TB of log files (564,704 log files, 3.284 BN requests)
 
 | Workload  | Machine 1 Time | Machine 2 Time |
 | --------- | -------------- | -------------- |
@@ -221,6 +223,6 @@ with three different workloads:
 | 2 (index) |                |                |
 | 2         |                |                |
 | 3 (index) | 5.7 hours      | -              |
-| 3         | ~20 ? hours    | -              |
+| 3         | 50.5 hours.    | -              |
 
-1.4 TB logs (564,704 log files, 3.284 BN lines) should be indexed in 5.7 hours; index file will be about 104MB in size, about 565k lines.
+
