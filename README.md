@@ -40,6 +40,12 @@ But such queries are often still possible to answer by re-writing the query and 
 
 ### Usage Examples
 
+Instal SQLite with
+
+```bash
+pip install sqlite3
+```
+
 To process live logs:
 
 ```bash
