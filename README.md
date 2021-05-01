@@ -219,16 +219,16 @@ with three different workloads:
 
 * **Workload 1:** `live.py`  processing (simulated) 1000 requests per second
 
-* **Workload 2:** `historical.py` processing 20 GB of log files ()
+* **Workload 2:** `historical.py` running 4 queries over 3.4 GB of log files (1152 log files, 8.6 million requests)
 
-* **Workload 3:** `historical.py` running 19 queries over 1.4 TB of log files (564,704 log files, 3.284 BN requests)
+* **Workload 3:** `historical.py` running 19 queries over 1.4 TB of log files (564,704 log files, 3.284 billion requests)
 
 | Workload  | Machine 1 Time | Machine 2 Time |
 | --------- | -------------- | -------------- |
 | 1         |                |                |
-| 2 (index) |                |                |
-| 2         |                |                |
+| 2 (index) | -              | 8.04s          |
+| 2         | -              | 3m10s          |
 | 3 (index) | 5.7 hours      | -              |
-| 3         | 50.5 hours.    | -              |
+| 3         | 50.5 hours     | -              |
 
 
