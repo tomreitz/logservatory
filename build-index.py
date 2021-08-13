@@ -53,7 +53,8 @@ def process_logs(path, regex, fields):
 			fSize = os.path.getsize(path+fName)
 			fLines = rawcount(path+fName)
 			lines = [l.decode() for l in tail(path+fName, nLines)]
-			del lines[0]
+			if len(lines)>0:
+				del lines[0]
 			with open(path+fName) as f:
 				lines.extend(f.readline() for i in range(nLines))
 			# get min/max timestamp from firstNlines and lastNlines
@@ -97,7 +98,7 @@ if __name__ == "__main__":
 			format = arg
 
 	# validate args:
-	if format!='aws-elb-classic':
+	if format!='aws-elb-classic' and format!='aws-elb-application' and format!='ncsa-common' and format!='ncsa-combined':
 		print('Argument "format" (the log format) must be one of "aws-elb-classic", "aws-elb-application", "ncsa-common", "ncsa-combined", or "elf". See the documentation for details.')
 		exit()
 	if not os.path.isdir(input):
@@ -112,6 +113,16 @@ if __name__ == "__main__":
 			"ssl_cipher", "ssl_protocol",
 		]
 		regex = r"([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" (\"[^\"]*\") ([A-Z0-9-]+) ([A-Za-z0-9.-]*)$"
+
+	if format=='aws-elb-application':
+		fields = ["type", "timestamp", "elb", "client_ip", "client_port", "backend_ip", "backend_port",
+			"request_processing_time", "backend_processing_time", "response_processing_time",
+			"elb_status_code", "backend_status_code", "received_bytes", "sent_bytes",
+			"request_verb", "request_url", "request_protocol", "user_agent",
+			"ssl_cipher", "ssl_protocol",
+		]
+		regex = r"([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\""
+		#([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" (\"[^\"]*\") ([A-Z0-9-]+) ([A-Za-z0-9.-]*)$"
 
 
 	# process logs:

@@ -65,7 +65,7 @@ def validate_args(mode='live'):
 	global index, start, end, format, queries_file, output, sample, buffer_size, memory, period, queries
 
 	# validate args:
-	if format!='aws-elb-classic' and format!='ncsa-common' and format!='ncsa-combined':
+	if format!='aws-elb-classic' and format!='aws-elb-application' and format!='ncsa-common' and format!='ncsa-combined':
 		print('Argument "format" (the log format) must be one of "aws-elb-classic", "aws-elb-application", "ncsa-common", "ncsa-combined", or "elf". See the documentation for details.')
 		exit()
 	#if mode=='logs' and index file doesn't exist:
@@ -165,6 +165,20 @@ request_status_code string, backend_status_code string, received_bytes bigint, s
 request_verb string, request_url string, request_protocol string, user_agent string, ssl_cipher string,
 ssl_protocol string) """)
 
+	if format=='aws-elb-application':
+		fields = ["type", "timestamp", "elb", "client_ip", "client_port", "backend_ip", "backend_port",
+			"request_processing_time", "backend_processing_time", "response_processing_time",
+			"request_status_code", "backend_status_code", "received_bytes", "sent_bytes",
+			"request_verb", "request_url", "request_protocol", "user_agent",
+			"ssl_cipher", "ssl_protocol",
+		]
+		c.execute("""CREATE TABLE IF NOT EXISTS logs (
+timestamp int,  elb_name string, request_ip string, request_port int, backend_ip string, backend_port int,
+request_processing_time double, backend_processing_time double, client_response_time double,
+request_status_code string, backend_status_code string, received_bytes bigint, sent_bytes bigint,
+request_verb string, request_url string, request_protocol string, user_agent string, ssl_cipher string,
+ssl_protocol string) """)
+
 	if format=='ncsa-common':
 		fields = ["request_ip", "auth_user", "timestamp", "request_verb", "request_url", "request_protocol",
 			"request_status_code", "sent_bytes",
@@ -237,7 +251,9 @@ def ingest_logs():
 		if format=='aws-elb-classic':
 			# REFERENCE: https://docs.aws.amazon.com/athena/latest/ug/application-load-balancer-logs.html#create-alb-table
 			regex = r'([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) "([^ ]*) ([^ ]*) (- |[^ ]*)" ("[^\"]*") ([A-Z0-9-]+) ([A-Za-z0-9.-]*)$'
-			#regex = r"([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" ($|\"[^ ]*\")(.*)"
+		elif format=='aws-elb-application':
+			regex = r'([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) \"([^ ]*) ([^ ]*) (- |[^ ]*)\" \"([^\"]*)\" ([A-Z0-9-]+) ([A-Za-z0-9.-]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^\"]*)\" ([-.0-9]*) ([^ ]*) \"([^\"]*)\" \"([^\"]*)\" \"([^ ]*)\" \"([^\s]+?)\" \"([^\s]+)\" \"([^ ]*)\" \"([^ ]*)\"'
+			#([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*):([0-9]*) ([^ ]*)[:-]([0-9]*) ([-.0-9]*) ([-.0-9]*) ([-.0-9]*) (|[-0-9]*) (-|[-0-9]*) ([-0-9]*) ([-0-9]*) "([^ ]*) ([^ ]*) (- |[^ ]*)" ("[^\"]*") ([A-Z0-9-]+) ([A-Za-z0-9.-]*)$'
 		elif format=='ncsa-common':
 			regex = '([(\d\.)]+) - (.*?) \[(.*?)\] "(.*?) (.*?) (.*?)" (\d+) (\d+)'
 		elif format=='ncsa-combined':
@@ -249,12 +265,14 @@ def ingest_logs():
 			for i, field in enumerate(fields):
 				if field=='timestamp' and (format=='ncsa-common' or format=='ncsa-combined'):
 					values.append(datetime.timestamp(parse(matches.group(i+1).replace(':',' ',1))))
+				elif format=='aws-elb-application' and field=='type':
+					continue
 				else:
 					values.append(matches.group(i+1))
 			log_values.append(values)
 	cur = connection.cursor()
 
-	if format=='aws-elb-classic':
+	if format=='aws-elb-classic' or format=='aws-elb-application':
 		cur.executemany("""INSERT INTO logs (
 timestamp, elb_name, request_ip, request_port, backend_ip, backend_port,
 request_processing_time, backend_processing_time, client_response_time,
